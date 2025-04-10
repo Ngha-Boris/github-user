@@ -3,8 +3,7 @@ import OverviewView from './OverviewView';
 import RepositoriesView from './RepositoriesView';
 import ActivityView from './ActivityView';
 import ContributedView from './ContributedView';
-import SocialInsightsView from './SocialInsightsView'; // Add this import
-
+import SocialInsightsView from './SocialInsightsView'; 
 const UserStats = ({
   data,
   isUser1,
