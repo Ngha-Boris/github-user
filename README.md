@@ -27,7 +27,7 @@ Clone the project to your local machine:
 ```bash
     git clone git@github.com:Ngha-Boris/github-user.git
 
-    cd github-user-stats
+    cd github-user
 ```
  Set Up and Run the Frontend
 The frontend is a React application built with Vite. It communicates with the backend API to fetch GitHub user data.
