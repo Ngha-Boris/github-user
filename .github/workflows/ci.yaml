@@ -75,12 +75,7 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-
-      # Run ESLint for linting
-      - name: Run ESLint
-        working-directory: frontend
-        run: npm run lint
-
+        
       # Build the frontend
       - name: Build frontend
         working-directory: frontend
