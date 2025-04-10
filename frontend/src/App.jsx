@@ -1,103 +1,194 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import html2pdf from 'html2pdf.js';
+
+// Components
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
+import UserInput from './components/UserInput';
+import UserStats from './components/UserStats';
+import ComparisonTable from './components/ComparisonTable';
+import RepoModal from './components/RepoModal';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function App() {
   const [username, setUsername] = useState('');
+  const [username2, setUsername2] = useState('');
   const [userData, setUserData] = useState(null);
+  const [userData2, setUserData2] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [repoSearch, setRepoSearch] = useState('');
+  const [languageFilter, setLanguageFilter] = useState('');
+  const [repoPage, setRepoPage] = useState(1);
+  const [projectsPage, setProjectsPage] = useState(1);
+  const [selectedRepo, setSelectedRepo] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeView, setActiveView] = useState('overview');
+  const itemsPerPage = 5;
+  const dashboardRef = useRef(null);
 
-  const fetchUserData = async () => {
-    if (!username.trim()) {
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
+  const fetchUserData = async (user, setData) => {
+    if (!user.trim()) {
       setError('Please enter a GitHub username');
       return;
     }
 
     setLoading(true);
     setError(null);
-    setUserData(null);
+    setData(null);
 
     try {
-      const response = await fetch(`/api/github/users/${username}`);
+      const response = await fetch(`/api/github/users/${user}`);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        let errorMessage = `HTTP error! status: ${response.status}, message: ${errorText}`;
+        if (response.status === 502) {
+          errorMessage = "Unable to fetch data from GitHub. This might be due to API rate limiting. Please try again later.";
+        } else if (response.status === 404) {
+          errorMessage = `User '${user}' not found on GitHub.`;
+        }
+        throw new Error(errorMessage);
       }
       const data = await response.json();
-      setUserData(data);
+      console.log('Fetched data:', data);
+      setData(data);
     } catch (err) {
+      console.error('Fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleFetchUser1 = () => fetchUserData(username, setUserData);
+  const handleFetchUser2 = () => fetchUserData(username2, setUserData2);
+
+  const shareProfile = (username) => {
+    const url = `${window.location.origin}/?user=${username}`;
+    navigator.clipboard.writeText(url);
+    alert('Profile URL copied to clipboard!');
+  };
+
+  const exportToPDF = () => {
+    const element = dashboardRef.current;
+    const opt = {
+      margin: 0.5,
+      filename: `${userData?.username || 'github-stats'}-stats.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+    };
+    html2pdf().set(opt).from(element).save();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          GitHub User Stats
-        </h1>
-        <div className="flex justify-center mb-6">
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter GitHub username (e.g., rust-lang)"
-            className="p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex">
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        activeView={activeView}
+        setActiveView={setActiveView}
+      />
+
+      <div className="flex-1 p-4 md:ml-64">
+        <div className="max-w-6xl mx-auto">
+          <Header
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
           />
-          <button
-            onClick={fetchUserData}
-            className="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600 transition"
-          >
-            Get Stats
-          </button>
-        </div>
 
-        {loading && (
-          <div className="flex justify-center">
-            <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-          </div>
-        )}
-
-        {error && <p className="text-red-500 text-center">{error}</p>}
-
-        {userData && (
-          <div className="p-4 border border-gray-200 rounded-md">
-            <h2 className="text-xl font-semibold text-blue-600 mb-4">{userData.username}</h2>
-            <img
-              src={userData.avatar}
-              alt={`${userData.username}'s avatar`}
-              className="w-24 h-24 rounded-full mb-4 mx-auto"
+          <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
+            <UserInput
+              username={username}
+              setUsername={setUsername}
+              handleFetchUser={handleFetchUser1}
+              placeholder="Enter first GitHub username"
+              buttonText="Get Stats"
             />
-            <p><strong className="text-gray-700">Name:</strong> {userData.name || 'Not provided'}</p>
-            <p><strong className="text-gray-700">Bio:</strong> {userData.bio || 'Not provided'}</p>
-            <p><strong className="text-gray-700">Public Repositories:</strong> {userData.public_repos}</p>
-            <p><strong className="text-gray-700">Repositories:</strong></p>
-            <ul className="list-disc pl-5">
-              {userData.repo_links.map((link, index) => (
-                <li key={index}>
-                  <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <p><strong className="text-gray-700">Commits Last Year:</strong> {userData.commits_last_year}</p>
-            <p><strong className="text-gray-700">Verified Commits Last Year:</strong> {userData.verified_commits_last_year}</p>
-            <p><strong className="text-gray-700">Merged Pull Requests:</strong> {userData.merged_pull_requests}</p>
-            <p><strong className="text-gray-700">Contributed Projects:</strong></p>
-            <ul className="list-disc pl-5">
-              {userData.contributed_projects.map((project, index) => (
-                <li key={index}>
-                  <a href={project} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                    {project}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <p><strong className="text-gray-700">Followers:</strong> {userData.followers}</p>
-            <p><strong className="text-gray-700">Following:</strong> {userData.following}</p>
+            <UserInput
+              username={username2}
+              setUsername={setUsername2}
+              handleFetchUser={handleFetchUser2}
+              placeholder="Enter second GitHub username (optional)"
+              buttonText="Get Stats"
+            />
           </div>
-        )}
+
+          {loading && (
+            <div className="flex justify-center">
+              <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            </div>
+          )}
+
+          {error && <p className="text-red-500 dark:text-red-400 text-center">{error}</p>}
+
+          <div ref={dashboardRef}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {userData && (
+                <UserStats
+                  data={userData}
+                  isUser1={true}
+                  activeView={activeView}
+                  repoSearch={repoSearch}
+                  setRepoSearch={setRepoSearch}
+                  languageFilter={languageFilter}
+                  setLanguageFilter={setLanguageFilter}
+                  repoPage={repoPage}
+                  setRepoPage={setRepoPage}
+                  projectsPage={projectsPage}
+                  setProjectsPage={setProjectsPage}
+                  setSelectedRepo={setSelectedRepo}
+                  shareProfile={shareProfile}
+                  exportToPDF={exportToPDF}
+                  itemsPerPage={itemsPerPage}
+                />
+              )}
+              {userData2 && (
+                <UserStats
+                  data={userData2}
+                  isUser1={false}
+                  activeView={activeView}
+                  repoSearch={repoSearch}
+                  setRepoSearch={setRepoSearch}
+                  languageFilter={languageFilter}
+                  setLanguageFilter={setLanguageFilter}
+                  repoPage={repoPage}
+                  setRepoPage={setRepoPage}
+                  projectsPage={projectsPage}
+                  setProjectsPage={setProjectsPage}
+                  setSelectedRepo={setSelectedRepo}
+                  shareProfile={shareProfile}
+                  exportToPDF={exportToPDF}
+                  itemsPerPage={itemsPerPage}
+                />
+              )}
+            </div>
+            <ComparisonTable userData={userData} userData2={userData2} />
+          </div>
+
+          <RepoModal selectedRepo={selectedRepo} setSelectedRepo={setSelectedRepo} />
+        </div>
       </div>
     </div>
   );

@@ -1,27 +1,19 @@
-use std::path::Path;
-
-use axum::{Router, routing::{get, get_service}};
-use tower_http::services::ServeDir;
+use axum::{
+    Router, Server,
+    routing::{get, get_service},
+};
 use github_user::handlers::proxy_user;
+use std::path::Path;
+use tower_http::services::ServeDir;
 
 #[tokio::main]
 async fn main() {
     // API router for the GitHub user endpoint
-    let api_router = Router::new()
-        .route("/github/users/:username", get(proxy_user));
+    let api_router = Router::new().route("/github/users/:username", get(proxy_user));
+
     let path = Path::new("frontend/dist");
-    let service = ServeDir::new("assets");
     // Serve static files from frontend/dist
-    let static_files = get_service(
-        ServeDir::new(path)
-            .append_index_html_on_directories(true)
-            .compat()
-    ).handle_error(|error: std::io::Error| async move {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to serve static file: {}", error),
-        )
-    });
+    let static_files = get_service(ServeDir::new(path).append_index_html_on_directories(true));
 
     // Combine the API and static file serving
     let app = Router::new()
@@ -32,5 +24,10 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
         .await
         .unwrap();
-    axum::serve(listener, app).await.unwrap();
+
+    Server::from_tcp(listener.into_std().unwrap())
+        .unwrap()
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }

@@ -9,8 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "chart.js": "^4.4.0",
+    "framer-motion": "^12.6.3",
+    "html2pdf.js": "^0.10.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.2.0",
+    "react-minimal-pie-chart": "^9.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
@@ -20,5 +25,4 @@
     "vite": "^4.3.9"
   },
   "proxy": "http://localhost:3000"
-
 }
