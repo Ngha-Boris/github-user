@@ -22,17 +22,15 @@ Frontend: Located in the frontend/ directory, built with React and Vite.
 ### How to Run the Project
 Follow these steps to set up and run the project locally.
  Clone the Repository
-
-    Clone the project to your local machine:
+Clone the project to your local machine:
 
 ```bash
-    git clone https://github.com/your-username/github-user-stats.git
+    git clone git@github.com:Ngha-Boris/github-user.git
 
     cd github-user-stats
 ```
  Set Up and Run the Frontend
-
-    The frontend is a React application built with Vite. It communicates with the backend API to fetch GitHub user data.
+The frontend is a React application built with Vite. It communicates with the backend API to fetch GitHub user data.
 
  Navigate to the frontend directory:
 ```bash
@@ -41,7 +39,7 @@ Follow these steps to set up and run the project locally.
 
  Install dependencies:
 ```bash
-    cd frontend
+    npm insatll
 ```
 
  Build the frontend for production (this creates the frontend/dist directory that the backend serves):

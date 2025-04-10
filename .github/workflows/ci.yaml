@@ -1,0 +1,87 @@
+name: CI
+
+# Trigger the workflow on push to the main branch and on pull requests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Define environment variables (if needed)
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: stable
+
+jobs:
+  # Job for building and testing the Rust backend
+  backend:
+    name: Build and Test Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Rust
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: rustfmt, clippy
+
+      # Cache Rust dependencies to speed up builds
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      # Run cargo fmt to check code formatting
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      # Run clippy for linting
+      - name: Run Clippy
+        run: cargo clippy -- -D warnings
+
+      # Build the backend
+      - name: Build backend
+        run: cargo build --verbose
+
+      # Run tests (if you have any)
+      - name: Run tests
+        run: cargo test --verbose
+
+  # Job for building and linting the React frontend
+  frontend:
+    name: Build and Lint Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Use Node.js 20 (or adjust to your preferred version)
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # Install frontend dependencies
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # Run ESLint for linting
+      - name: Run ESLint
+        working-directory: frontend
+        run: npm run lint
+
+      # Build the frontend
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
