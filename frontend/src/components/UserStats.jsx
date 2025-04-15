@@ -1,57 +1,27 @@
-import React from 'react';
-import OverviewView from './OverviewView';
-import RepositoriesView from './RepositoriesView';
-import ActivityView from './ActivityView';
-import ContributedView from './ContributedView';
-import SocialInsightsView from './SocialInsightsView'; 
-const UserStats = ({
-  data,
-  isUser1,
-  activeView,
-  repoSearch,
-  setRepoSearch,
-  languageFilter,
-  setLanguageFilter,
-  repoPage,
-  setRepoPage,
-  projectsPage,
-  setProjectsPage,
-  setSelectedRepo,
-  shareProfile,
-  exportToPDF,
-  itemsPerPage,
-}) => {
-  if (!data) {
-    console.log('No data provided to renderUserStats');
-    return null;
-  }
+import React, { useState } from "react";
+import OverviewView from "./OverviewView";
+import RepositoriesView from "./RepositoriesView";
+import ActivityView from "./ActivityView";
+import ContributedView from "./ContributedView";
+import SocialInsightsView from "./SocialInsightsView";
 
-  console.log('Rendering stats for:', data.username);
+const UserStats = ({ data, platform, activeView, setSelectedRepo }) => {
+  const [repoSearch, setRepoSearch] = useState("");
+  const [languageFilter, setLanguageFilter] = useState("");
+  const [repoPage, setRepoPage] = useState(1);
+  const itemsPerPage = 5;
+
+  console.log("UserStats Data:", data);
+
+  if (!data) return null;
 
   return (
     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400">
-          {data.username}
-        </h2>
-        <div className="space-x-2">
-          <button
-            onClick={() => shareProfile(data.username)}
-            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
-          >
-            Share Profile
-          </button>
-          <button
-            onClick={exportToPDF}
-            className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 transition"
-          >
-            Export as PDF
-          </button>
-        </div>
-      </div>
-
-      {activeView === 'overview' && <OverviewView data={data} isUser1={isUser1} />}
-      {activeView === 'repositories' && (
+      <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-400">
+        {data.username} ({platform.charAt(0).toUpperCase() + platform.slice(1)})
+      </h2>
+      {activeView === "overview" && <OverviewView data={data} />}
+      {activeView === "repositories" && (
         <RepositoriesView
           data={data}
           repoSearch={repoSearch}
@@ -64,16 +34,9 @@ const UserStats = ({
           itemsPerPage={itemsPerPage}
         />
       )}
-      {activeView === 'activity' && <ActivityView data={data} />}
-      {activeView === 'contributed' && (
-        <ContributedView
-          data={data}
-          projectsPage={projectsPage}
-          setProjectsPage={setProjectsPage}
-          itemsPerPage={itemsPerPage}
-        />
-      )}
-      {activeView === 'social' && <SocialInsightsView data={data} />}
+      {activeView === "activity" && <ActivityView data={data} />}
+      {activeView === "contributed" && <ContributedView data={data} />}
+      {activeView === "social" && <SocialInsightsView data={data} />}
     </div>
   );
 };

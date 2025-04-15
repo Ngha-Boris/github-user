@@ -21,8 +21,8 @@ pub struct Repo {
     pub stargazers_count: u32,
     pub description: Option<String>,
     pub forks_count: u32,
-    pub watchers_count: u32, // Add watchers_count
-    pub topics: Vec<String>, // Add topics
+    pub watchers_count: u32,
+    pub topics: Vec<String>,
     pub updated_at: DateTime<Utc>,
 }
 
@@ -88,4 +88,21 @@ pub struct Activity {
     pub repo_name: String,
     pub created_at: DateTime<Utc>,
     pub description: String,
+}
+
+// GitHub search result item
+#[derive(Deserialize, Clone, Serialize)]
+pub struct GithubUserSearchItem {
+    pub login: String,
+    pub id: u64,
+    pub avatar_url: String,
+    pub html_url: String,
+}
+
+// GitHub search response
+#[derive(Deserialize)]
+pub struct GithubUserSearchResult {
+    pub total_count: u32,
+    pub incomplete_results: bool,
+    pub items: Vec<GithubUserSearchItem>,
 }

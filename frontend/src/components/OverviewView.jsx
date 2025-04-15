@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
 const OverviewView = ({ data, isUser1 }) => {
+  const chartRef = useRef(null);
+
   const chartData = {
     labels: ['Commits Last Year', 'Merged PRs', 'Followers', 'Following'],
     datasets: [
@@ -17,6 +23,41 @@ const OverviewView = ({ data, isUser1 }) => {
       },
     ],
   };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+    },
+    scales: {
+      x: {
+        type: 'category',
+        title: {
+          display: true,
+          text: 'Metrics',
+        },
+      },
+      y: {
+        type: 'linear',
+        title: {
+          display: true,
+          text: 'Values',
+        },
+        beginAtZero: true,
+      },
+    },
+  };
+
+  useEffect(() => {
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, []);
+
+  // Debug contribution graph data
+  console.log("Contribution Graph Data:", data.contribution_graph);
 
   return (
     <div>
@@ -44,13 +85,13 @@ const OverviewView = ({ data, isUser1 }) => {
 
       <div className="mt-4">
         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">User Stats</h3>
-        <Bar data={chartData} options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
+        <Bar ref={chartRef} data={chartData} options={options} />
       </div>
 
       <div className="mt-4">
         <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">Contribution Graph</h3>
         {data.contribution_graph && Object.keys(data.contribution_graph).length > 0 ? (
-          <div className="text-gray-600 dark:text-gray-400">
+          <div className="text-gray-600 dark:text-gray-400 overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
@@ -59,17 +100,21 @@ const OverviewView = ({ data, isUser1 }) => {
                 </tr>
               </thead>
               <tbody>
-                {Object.entries(data.contribution_graph).map(([date, count], index) => (
-                  <tr key={index}>
-                    <td className="border border-gray-300 dark:border-gray-600 p-2">{date}</td>
-                    <td className="border border-gray-300 dark:border-gray-600 p-2">{count}</td>
-                  </tr>
-                ))}
+                {Object.entries(data.contribution_graph)
+                  .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB)) // Sort by date
+                  .map(([date, count], index) => (
+                    <tr key={index}>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2">{date}</td>
+                      <td className="border border-gray-300 dark:border-gray-600 p-2">{count}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-gray-600 dark:text-gray-400">No contribution data available.</p>
+          <p className="text-gray-600 dark:text-gray-400">
+            No contribution data available for the last year.
+          </p>
         )}
       </div>
     </div>
